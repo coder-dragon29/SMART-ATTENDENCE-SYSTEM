@@ -1,108 +1,433 @@
-# Smart Attendance System — Backend
+# Smart Attendance System
+<img width="1887" height="970" alt="image" src="https://github.com/user-attachments/assets/15b12ea5-aee9-4a58-b041-eae937acb6a6" />
 
-A REST API backend for the **Smart India Hackathon** attendance-tracking frontend
-(`index.html`, `student-login.html`, `student-dashboard.html`, `teacher-login.html`,
-`teacher-dashboard.html`). The original frontend faked its backend with
-`localStorage`/`sessionStorage` (see `common.js` → `Store`); this project replaces
-that mock with a real Node.js/Express API, JWT authentication, and persisted data.
+A full-stack **Smart Attendance Management System** designed to simplify classroom attendance using secure authentication, real-time attendance sessions, dashboards, reports, and browser-based face recognition.
 
-No database server to install — data is stored in a local JSON file
-(`src/data/db.json`), auto-created on first run. Swap `src/db/jsonDb.js` for
-Postgres/MongoDB later without touching any controller.
+The project includes a modern frontend and a Node.js/Express REST API backend, making it suitable for college projects, hackathons, academic demonstrations, and future production expansion.
 
-## Quick start
+---
+
+## Features
+
+### Student Features
+
+* Student registration and login
+* Student dashboard
+* View attendance statistics
+* View attendance history
+* Track attendance percentage
+* Join active attendance sessions
+* Face ID enrollment using webcam
+* Automatic attendance marking through face recognition
+
+### Teacher Features
+
+* Teacher registration and login
+* Create and manage attendance sessions
+* Start and end classroom sessions
+* View live attendance
+* Mark attendance manually or using face recognition
+* Class-wise attendance reports
+* Date-wise attendance reports
+* View recent sessions and attendance statistics
+
+### System Features
+
+* JWT-based authentication
+* Password hashing using bcrypt
+* RESTful API architecture
+* Persistent JSON-based data storage
+* CORS support
+* Login rate limiting
+* Browser-based face recognition using `face-api.js`
+* No student images or videos are uploaded to the backend
+* Responsive web interface
+
+---
+
+## Technology Stack
+
+### Frontend
+
+* HTML5
+* CSS3
+* JavaScript
+* Face API.js
+* Browser Webcam API
+
+### Backend
+
+* Node.js
+* Express.js
+* JWT
+* bcryptjs
+* dotenv
+* CORS
+* Express Rate Limit
+
+### Database
+
+* Local JSON file storage
+* Easily replaceable with MongoDB, PostgreSQL, or another database
+
+---
+
+## Project Structure
+
+```text
+smart-attendance-project/
+│
+├── frontend/
+│   ├── index.html
+│   ├── index.js
+│   ├── index.css
+│   ├── common.js
+│   ├── config.js
+│   ├── face.js
+│   │
+│   ├── student-login.html
+│   ├── student-login.js
+│   ├── student-dashboard.html
+│   ├── student-dashboard.js
+│   ├── student-dashboard.css
+│   │
+│   ├── teacher-login.html
+│   ├── teacher-login.js
+│   ├── teacher-dashboard.html
+│   ├── teacher-dashboard.js
+│   ├── teacher-dashboard.css
+│   │
+│   └── assets/
+│
+├── backend/
+│   ├── package.json
+│   ├── .env.example
+│   ├── README.md
+│   │
+│   └── src/
+│       ├── app.js
+│       ├── server.js
+│       ├── config/
+│       ├── controllers/
+│       ├── db/
+│       ├── middleware/
+│       ├── routes/
+│       └── utils/
+│
+└── README.md
+```
+
+---
+
+## How Face Recognition Works
+
+The system uses browser-based face recognition to identify enrolled students.
+
+### Face Enrollment
+
+1. The student opens the Face ID Enrollment section.
+2. The webcam captures the student's face.
+3. `face-api.js` generates a 128-dimensional face descriptor.
+4. Only the numerical descriptor is sent to the backend.
+5. No image or video is stored on the server.
+
+### Attendance Recognition
+
+1. A teacher starts an attendance session.
+2. The teacher activates the camera.
+3. The browser loads enrolled student face descriptors.
+4. The current camera frame is compared against known descriptors.
+5. If a match is found, attendance is marked automatically.
+
+> Face matching is performed locally in the browser. The backend stores only face descriptor data, not photographs or videos.
+
+---
+
+## Requirements
+
+Make sure the following are installed:
+
+* Node.js version 18 or higher
+* npm
+* A modern web browser
+* Webcam for Face ID functionality
+
+---
+
+## Installation and Setup
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/smart-attendance-project.git
+cd smart-attendance-project
+```
+
+### 2. Setup Backend
 
 ```bash
 cd backend
 npm install
-cp .env.example .env      # edit JWT_SECRET etc. if you like
-npm run seed               # optional: creates a demo teacher + student
-npm run dev                 # starts on http://localhost:5000
 ```
 
-Demo login (after `npm run seed`):
-- Teacher: `demo.teacher@college.edu` / `password123`
-- Student: roll `CSE5001` / `password123`
+Create the environment file:
 
-Health check: `GET http://localhost:5000/api/health`
-
-## Project structure
-
-```
-backend/
-  src/
-    config/          env-driven configuration
-    db/              jsonDb.js (file storage) + repository.js (CRUD helpers)
-    middleware/       auth.js (JWT), errorHandler.js
-    controllers/       auth, session, attendance, dashboard
-    routes/             one file per resource, mounted under /api/*
-    utils/               helpers.js (session-ID generator, async wrapper), seed.js
-    app.js / server.js
+```bash
+cp .env.example .env
 ```
 
-## Authentication
+For Windows, manually copy `.env.example` to `.env` if required.
 
-JWT bearer tokens. Register/login returns `{ token, user }`; send
-`Authorization: Bearer <token>` on every subsequent request.
+Update the `.env` file according to your configuration.
 
-| Method | Route                       | Auth    | Body                                              |
-|--------|------------------------------|---------|----------------------------------------------------|
-| POST   | `/api/auth/student/register` | –       | `rollNumber, name, password, department?, semester?` |
-| POST   | `/api/auth/student/login`    | –       | `rollNumber, password`                              |
-| POST   | `/api/auth/teacher/register` | –       | `email, name?, password, department?`               |
-| POST   | `/api/auth/teacher/login`    | –       | `email, password`                                   |
-| GET    | `/api/auth/me`               | Bearer  | –                                                    |
+### 3. Seed Demo Accounts (Optional)
 
-## Sessions (a "class" a teacher starts)
+```bash
+npm run seed
+```
 
-| Method | Route                          | Auth              | Notes                                    |
-|--------|---------------------------------|-------------------|--------------------------------------------|
-| POST   | `/api/sessions`                 | teacher           | `subject, className, room?, description?` → generates `SAS-XXXXXX` id |
-| GET    | `/api/sessions?mine=true&status=active&subject=` | any (Bearer) | filters are optional |
-| GET    | `/api/sessions/active`          | any (Bearer)      | latest active session (own, if teacher)   |
-| GET    | `/api/sessions/:sessionId`      | any (Bearer)      | –                                          |
-| PATCH  | `/api/sessions/:sessionId/end`  | teacher (owner)   | sets `status: "ended"`                    |
+This creates sample login accounts for testing.
 
-## Attendance
+### 4. Start the Backend
 
-| Method | Route                                    | Auth            | Notes |
-|--------|--------------------------------------------|-----------------|-------|
-| POST   | `/api/attendance/mark`                     | student         | `{ sessionId }` — marks the logged-in student present |
-| POST   | `/api/attendance/mark-manual`              | teacher (owner) | `{ sessionId, rollNumber, studentName }` — for the camera/manual-entry flow |
-| GET    | `/api/attendance/session/:sessionId`       | Bearer          | list of who's present in a session |
-| GET    | `/api/attendance/student/:rollNumber`      | Bearer          | a student's full history (self, or any teacher) |
-| GET    | `/api/attendance/reports/class?subject=`   | teacher         | per-student attended/percentage for a subject (Class Report tab) |
-| GET    | `/api/attendance/reports/date?subject=&date=` | teacher      | who attended a subject on a given date (Date Report tab) |
+For development:
 
-## Dashboards
+```bash
+npm run dev
+```
 
-| Method | Route                     | Auth    | Mirrors             |
-|--------|----------------------------|---------|-----------------------|
-| GET    | `/api/dashboard/student`   | student | `loadDashboard()` in `student-dashboard.js` — totals, 75% tracker, last-10 history |
-| GET    | `/api/dashboard/teacher`   | teacher | `loadDashboard()` in `teacher-dashboard.js` — totals, recent sessions |
+For production-style execution:
 
-## Connecting the existing frontend
+```bash
+npm start
+```
 
-The current `common.js` `Store` object reads/writes `localStorage`/`sessionStorage`
-directly. To wire the frontend to this API:
+The backend will run at:
 
-1. Replace `Store.setUser`/login logic in `student-login.js` / `teacher-login.js`
-   with a `fetch('/api/auth/.../login', { method: 'POST', body: JSON.stringify(...) })`
-   call, and store the returned `token` (e.g. in `sessionStorage`) instead of
-   the raw form input.
-2. Send `Authorization: Bearer <token>` on every dashboard fetch.
-3. Replace `Store.createSession`, `Store.markAttendance`, `Store.getSessions()`,
-   etc. with calls to the matching endpoints above — the response shapes
-   (`sessionId`, `subject`, `className`, `teacher`, `status`, `rollNumber`,
-   `studentName`, `timestamp`) were kept identical to the objects the frontend
-   already builds, so the rendering code (`loadDashboard`, `refreshLiveList`,
-   `loadClassReport`, etc.) needs minimal changes.
-4. Set `CORS_ORIGIN` in `.env` to wherever the static HTML is served from.
+```text
+http://localhost:5000
+```
 
-## Notes
+### 5. Start the Frontend
 
-- Passwords are hashed with bcrypt; nothing is stored in plaintext.
-- `src/data/db.json` is git-ignored — delete it any time to reset all data.
-- Rate limiting is applied to the two login endpoints to slow brute-force attempts.
-- This is a hackathon-grade backend: the JSON file store is fine for a demo/judging
-  round but should be swapped for a real database before any production use.
+Open a new terminal:
+
+```bash
+cd frontend
+```
+
+You can use any static server.
+
+Using `npx serve`:
+
+```bash
+npx serve .
+```
+
+Or using Python:
+
+```bash
+python -m http.server 3000
+```
+
+You can also use the **Live Server** extension in Visual Studio Code.
+
+---
+
+## Configuration
+
+Open:
+
+```text
+frontend/config.js
+```
+
+Update the backend URL if necessary:
+
+```javascript
+const API_BASE = "http://localhost:5000";
+```
+
+The frontend must point to the correct backend address.
+
+Also ensure that the frontend origin is included in the backend's `CORS_ORIGIN` configuration.
+
+Example:
+
+```env
+CORS_ORIGIN=http://localhost:3000
+```
+
+---
+
+## Demo Credentials
+
+After running:
+
+```bash
+npm run seed
+```
+
+You can use:
+
+### Teacher
+
+```text
+Email: demo.teacher@college.edu
+Password: password123
+```
+
+### Student
+
+```text
+Roll Number: CSE5001
+Password: password123
+```
+
+---
+
+## API Overview
+
+### Authentication
+
+| Method | Endpoint                     | Description        |
+| ------ | ---------------------------- | ------------------ |
+| POST   | `/api/auth/student/register` | Register a student |
+| POST   | `/api/auth/student/login`    | Student login      |
+| POST   | `/api/auth/teacher/register` | Register a teacher |
+| POST   | `/api/auth/teacher/login`    | Teacher login      |
+| GET    | `/api/auth/me`               | Get current user   |
+
+### Sessions
+
+| Method | Endpoint                       | Description               |
+| ------ | ------------------------------ | ------------------------- |
+| POST   | `/api/sessions`                | Create attendance session |
+| GET    | `/api/sessions`                | Get sessions              |
+| GET    | `/api/sessions/active`         | Get active session        |
+| GET    | `/api/sessions/:sessionId`     | Get session details       |
+| PATCH  | `/api/sessions/:sessionId/end` | End a session             |
+
+### Attendance
+
+| Method | Endpoint                              | Description                        |
+| ------ | ------------------------------------- | ---------------------------------- |
+| POST   | `/api/attendance/mark`                | Mark attendance as student         |
+| POST   | `/api/attendance/mark-manual`         | Mark attendance manually/by camera |
+| GET    | `/api/attendance/session/:sessionId`  | View session attendance            |
+| GET    | `/api/attendance/student/:rollNumber` | View student attendance history    |
+| GET    | `/api/attendance/reports/class`       | Class attendance report            |
+| GET    | `/api/attendance/reports/date`        | Date-wise attendance report        |
+
+### Dashboards
+
+| Method | Endpoint                 | Description            |
+| ------ | ------------------------ | ---------------------- |
+| GET    | `/api/dashboard/student` | Student dashboard data |
+| GET    | `/api/dashboard/teacher` | Teacher dashboard data |
+
+---
+
+## Security
+
+The project includes:
+
+* JWT authentication
+* Password hashing using bcrypt
+* Protected API routes
+* Role-based authorization
+* Login rate limiting
+* CORS configuration
+* No plaintext password storage
+
+---
+
+## Current Limitations
+
+This project is currently optimized for academic and hackathon demonstrations.
+
+* Data is stored in a local JSON file.
+* Face recognition works with one face at a time.
+* Face recognition accuracy depends on lighting and camera angle.
+* Face models are loaded from a public CDN by default.
+* A production deployment should use a proper database and stronger infrastructure.
+
+---
+
+## Future Improvements
+
+* MongoDB/PostgreSQL integration
+* Multi-face recognition in a single frame
+* Cloud deployment
+* Admin dashboard
+* Attendance export to Excel/PDF
+* Email notifications
+* QR code attendance
+* Mobile application
+* Advanced analytics and charts
+* Improved anti-spoofing/liveness detection
+* Offline face model support
+
+---
+
+## Use Cases
+
+* College classroom attendance
+* School attendance management
+* University departments
+* Coaching institutes
+* Training centers
+* Hackathon demonstrations
+* Smart campus applications
+
+---
+
+## Screenshots
+
+Add screenshots of your project here:
+
+```markdown
+![Home Page](screenshots/home.png)
+![Student Dashboard](screenshots/student-dashboard.png)
+![Teacher Dashboard](screenshots/teacher-dashboard.png)
+![Face Recognition](screenshots/face-recognition.png)
+```
+
+---
+
+## Contributing
+
+Contributions are welcome.
+
+1. Fork the repository
+2. Create a new branch
+
+```bash
+git checkout -b feature/new-feature
+```
+
+3. Commit your changes
+
+```bash
+git commit -m "Add new feature"
+```
+
+4. Push to your branch
+
+```bash
+git push origin feature/new-feature
+```
+
+5. Open a Pull Request
+
+---
+
+## License
+
+This project is available for educational and demonstration purposes.
+
+---
+
+## Author
+
+Team TEJAS 💕
